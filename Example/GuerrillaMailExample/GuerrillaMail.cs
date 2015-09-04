@@ -121,7 +121,7 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Returns our email with a specified domain
         /// </summary>
-        /// <param name="domain">Specifies which domain to return (0-8)</param>
+        /// <param name="domain">Specifies which domain to return (0-8) useful for services that blocks certain domains</param>
         /// <returns></returns>
         public string GetMyEmail(int domain = 0)
         {
