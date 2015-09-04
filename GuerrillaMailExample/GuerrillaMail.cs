@@ -40,9 +40,8 @@ namespace GuerrillaMailExample
 
         /// <summary>
         /// Initializer for the class.
-        /// Provide a (string)proxy if the requests should go via a proxy connection
         /// </summary>
-        /// <param name="Proxy"></param>
+        /// <param name="Proxy">Include a Proxy adress string if the request should go via a proxy</param>
         public GuerrillaMail(string proxy = "")
         {
             /*If we got passed a Proxy variable*/
@@ -86,7 +85,7 @@ namespace GuerrillaMailExample
         /// Returns all emails received after a specific email (specified by mail_id)
         /// Example: GetEmailsSinceID(53451833)
         /// </summary>
-        /// <param name="mail_id"></param>
+        /// <param name="mail_id">mail_id of an email</param>
         /// <returns></returns>
         public string GetEmailsSinceID(string mail_id)
         {
@@ -113,16 +112,16 @@ namespace GuerrillaMailExample
             }
             else
             {
-                /*last email is null, return empty string*/
-                return "";
+                /*last email is null, return empty*/
+                return "{}";
             }
         }
 
 
         /// <summary>
-        /// Returns our email
-        /// domain 0 or 1
+        /// Returns our email with a specified domain
         /// </summary>
+        /// <param name="domain">Specifies which domain to return (0-8)</param>
         /// <returns></returns>
         public string GetMyEmail(int domain = 0)
         {
@@ -157,7 +156,7 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Deletes an array of emails from the mailbox
         /// </summary>
-        /// <param name="mail_ids"></param>
+        /// <param name="mail_ids">´String array of mail_ids</param>
         public void DeleteEmails(string[] mail_ids)
         {
             /*If there are at least 1 ID in the array*/
@@ -180,7 +179,7 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Deletes a single email
         /// </summary>
-        /// <param name="mail_id"></param>
+        /// <param name="mail_id">mail_id of an email</param>
         public void DeleteSingleEmail(string mail_id)
         {
             Contact("f=del_email&email_ids[]=" + mail_id);

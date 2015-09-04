@@ -57,6 +57,9 @@ namespace GuerrillaMailExample
             Console.WriteLine(mailTwo.GetMyEmail(0));
             Console.WriteLine(mailTwo.GetMyEmail(1));
             Console.WriteLine(mailTwo.GetMyEmail(2));
+
+            /*Get all emails*/
+            Console.WriteLine(mailTwo.GetAllEmails());
         }
     }
 }
