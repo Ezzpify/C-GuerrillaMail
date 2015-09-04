@@ -1,11 +1,21 @@
 # C-GuerrillaMail
 C# Class for GuerrillaMail Temporary email service
 
-Need to quickly get an email adress and an activation link? Or just get an email? Who knows what plans you have, but this will help you out.
+Need to quickly get an email adress and an activation link? Or just get an email? Who knows what plans you have, but this will help you out if you prefer to do things in C#.
 
 Get a temporary and disposable email to quickly use using the GuerrillaMail public API.
 
-Responses will come in Json and the project relies on Json.NET (included in the project)
+Responses will come in Json and the project relies on Json.NET (included in the project).
+You can also check out their website http://www.newtonsoft.com/json
+
+```
+string GetAllEmails()
+string GetEmailsSinceID(string mail_id)
+string GetLastEmail()
+string GetMyEmail(int domain = 0)
+void DeleteEmails(string[] mail_ids)
+void DeleteSingleEmail(string mail_id)
+```
 
 Email responses will look like the following:
 
