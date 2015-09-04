@@ -6,7 +6,7 @@ Need to quickly get an email adress and an activation link? Or just get an email
 Get a temporary and disposable email to quickly use using the GuerrillaMail public API.
 
 Responses will come in Json and the project relies on Json.NET (included in the project).
-You can also check out their website http://www.newtonsoft.com/json
+Download lib from here: http://www.newtonsoft.com/json
 
 ```
 string GetAllEmails()
