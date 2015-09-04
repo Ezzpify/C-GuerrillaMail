@@ -156,7 +156,7 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Deletes an array of emails from the mailbox
         /// </summary>
-        /// <param name="mail_ids">´String array of mail_ids</param>
+        /// <param name="mail_ids">String array of mail_ids</param>
         public void DeleteEmails(string[] mail_ids)
         {
             /*If there are at least 1 ID in the array*/
