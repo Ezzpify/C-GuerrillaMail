@@ -5,61 +5,73 @@ namespace GuerrillaMailExample
 {
     class Program
     {
-        /* Email json example
-        {
-            "mail_id":"53312559",
-            "mail_from":"somemail@outlook.com",
-            "mail_subject":"Activation email",
-            "mail_excerpt":"Hey click this link to activate your account http://www.google.com thank you",
-            "mail_timestamp":"1441362791",
-            "mail_read":"0",
-            "mail_date":"9:32:15",
-            "att":"0",
-            "mail_size":"1050"
-        },
-        */
+        /// <summary>
+        /// Global email
+        /// </summary>
+        static GuerrillaMail mailThree;
 
+
+        /// <summary>
+        /// Here we're doing something with the email
+        /// </summary>
+        /// <param name="email"></param>
         static void DoSomethingWithEmail(string email)
         {
             //Maybe we call a service that requires an email confirmation here
         }
 
+
+        /// <summary>
+        /// Here we'll do something entierly different
+        /// </summary>
+        static void DoSomethingElseThatTakesTime()
+        {
+            //Wow that's a lot of code that's doing something else
+        }
+
+
+        /// <summary>
+        /// Main function
+        /// </summary>
+        /// <param name="args">No args</param>
         static void Main(string[] args)
         {
-            /*Example one*/
+            /*
+                Example One - Using IDisposable
+                We'll get the email body here then let it dispose
+            */
             using (GuerrillaMail mailOne = new GuerrillaMail())
             {
-                /*Do something with the email*/
-                DoSomethingWithEmail(mailOne.GetMyEmail());
+                /*Get our default email address and do something with it*/
+                var myEmailAddress = mailOne.GetMyEmail();
+                DoSomethingWithEmail(myEmailAddress);
 
-                /*Wait until we have a new email - should probably also wait inbetween the calls*/
-                while (mailOne.GetLastEmail() != "")
-                {
-                    /*Load up the JObject for email*/
-                    JObject Email = JObject.Parse(mailOne.GetLastEmail());
-
-                    /*Get the email body as string*/
-                    string EmailBody = (string)Email.SelectToken("mail_excerpt");
-
-                    /*Here you can interpret the email or maybe get the activation link from it and navigate to it*/
-                    /*Do whatever you want, is what I'm trying to say*/
-                    /*When you're done just let the class dispose*/
-                }
+                /*Get last email and print the text content (body)*/
+                var lastEmail = mailOne.GetLastEmail();
+                Console.WriteLine(lastEmail.mail_excerpt);
             }
 
-            /*Example two*/
-            /*Works the same way as above, but you can keep it*/
-            /*Maybe you could add a bunch of emails to a list and use them for whatever?*/
-            /*Endless possibilities...*/
-            GuerrillaMail mailTwo = new GuerrillaMail();
 
-            /*Get the different email domains*/
-            Console.WriteLine(mailTwo.GetMyEmail(0));
+            /*
+                Example Two - Doing it local
+                Print our different emails
+            */
+            GuerrillaMail mailTwo = new GuerrillaMail();
             Console.WriteLine(mailTwo.GetMyEmail(1));
             Console.WriteLine(mailTwo.GetMyEmail(2));
+            Console.WriteLine(mailTwo.GetMyEmail(3));
 
-            /*Get all emails*/
-            Console.WriteLine(mailTwo.GetAllEmails());
+
+            /*
+                Example Three - We're going global
+                This time we'll make the mail global so we can use it later
+            */
+            mailThree = new GuerrillaMail();
+            DoSomethingElseThatTakesTime();
+
+            /*Oops now we need to get ALL the email we've received*/
+            DoSomethingWithEmail(mailThree.GetMyEmail());
+            var myEmails = mailThree.GetAllEmails();
         }
     }
 }
