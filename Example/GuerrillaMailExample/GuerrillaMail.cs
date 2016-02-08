@@ -13,9 +13,9 @@ namespace GuerrillaMailExample
     class GuerrillaMail : IDisposable
     {
         /* 
-         * TmpMail
+         * GuerrillaMail.cs
          * -------------------------------------------------------------
-         * Quick and easy Temp email class for GuerrillaMail
+         * Quick and easy E-mail class for GuerrillaMail
          * Get new email, get messages, send messages then dispose of it
          * 
          * Free to use for whatever purpose
@@ -29,8 +29,21 @@ namespace GuerrillaMailExample
         /// </summary>
         private class Proxy
         {
+            /// <summary>
+            /// Proxy address
+            /// </summary>
             public string address { get; set; }
+
+            
+            /// <summary>
+            /// Proxy port
+            /// </summary>
             public int port { get; set; }
+
+
+            /// <summary>
+            /// If the proxy has been set
+            /// </summary>
             public bool initialized { get; set; }
         }
 
@@ -38,7 +51,7 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Email content class
         /// </summary>
-        public class EmailList
+        public class Email
         {
             /// <summary>
             /// ID of email
@@ -84,7 +97,7 @@ namespace GuerrillaMailExample
 
 
             /// <summary>
-            /// Email attribute
+            /// Email attributes attatched
             /// </summary>
             public object att { get; set; }
 
@@ -130,25 +143,6 @@ namespace GuerrillaMailExample
             /// Email body
             /// </summary>
             public string mail_body { get; set; }
-
-
-            /// <summary>
-            /// Email size kb
-            /// </summary>
-            public int? size { get; set; }
-        }
-
-
-        /// <summary>
-        /// Email stats class
-        /// </summary>
-        public class Stats
-        {
-            public string sequence_mail { get; set; }
-            public int created_addresses { get; set; }
-            public string received_emails { get; set; }
-            public string total { get; set; }
-            public string total_per_hour { get; set; }
         }
 
 
@@ -157,7 +151,15 @@ namespace GuerrillaMailExample
         /// </summary>
         public class Auth
         {
+            /// <summary>
+            /// If the request was a success
+            /// </summary>
             public bool success { get; set; }
+
+
+            /// <summary>
+            /// List of error codes if request was not a success
+            /// </summary>
             public List<object> error_codes { get; set; }
         }
 
@@ -165,15 +167,23 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Main email root class
         /// </summary>
-        public class Email
+        public class Response
         {
-            public List<EmailList> list { get; set; }
+            /// <summary>
+            /// List of emails in the inbox
+            /// </summary>
+            public List<Email> list { get; set; }
+
+
+            /// <summary>
+            /// Amount of emails
+            /// </summary>
             public string count { get; set; }
-            public string email { get; set; }
-            public string alias { get; set; }
-            public int ts { get; set; }
-            public string sid_token { get; set; }
-            public Stats stats { get; set; }
+
+
+            /// <summary>
+            /// Authentication status
+            /// </summary>
             public Auth auth { get; set; }
         }
 
@@ -203,10 +213,19 @@ namespace GuerrillaMailExample
 
 
         /// <summary>
-        /// Initializer for the class.
+        /// Initializer for class
         /// </summary>
-        /// <param name="Proxy">Include a Proxy adress string if the request should go via a proxy</param>
-        public GuerrillaMail(string proxy = "")
+        public GuerrillaMail()
+        {
+            InitializeEmail();
+        }
+
+
+        /// <summary>
+        /// Initializer for the class with proxy
+        /// </summary>
+        /// <param name="Proxy">Proxy address to request through</param>
+        public GuerrillaMail(string proxy)
         {
             /*If we got passed a Proxy variable*/
             if (!string.IsNullOrEmpty(proxy))
@@ -215,17 +234,30 @@ namespace GuerrillaMailExample
                 string ValidIPRegex = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):[\d]+$";
                 if (Regex.IsMatch(proxy, ValidIPRegex))
                 {
+                    /*Split the proxy input and assign to global*/
                     string[] pSpl = proxy.Split(':');
-
                     mProxy.address = pSpl[0];
                     mProxy.port = Convert.ToInt32(pSpl[1]);
                     mProxy.initialized = true;
-
                     mUseProxy = true;
+
+                    /*Initialize email and return*/
+                    InitializeEmail();
+                    return;
                 }
             }
 
-            /*Initialize the email*/
+            /*Proxy was incorrect*/
+            throw new Exception("Proxy input was bad.");
+        }
+
+
+        /// <summary>
+        /// This initializes the email and inbox on site
+        /// </summary>
+        private void InitializeEmail()
+        {
+            /*Initialize the inbox*/
             JObject Obj = JObject.Parse(Contact("f=get_email_address"));
             mEmailAlias = ((string)Obj.SelectToken("email_addr")).Split('@')[0];
 
@@ -238,9 +270,9 @@ namespace GuerrillaMailExample
         /// Returns full json response
         /// </summary>
         /// <returns></returns>
-        public Email GetContent()
+        public Response GetContent()
         {
-            return JsonConvert.DeserializeObject<Email>(Contact("f=get_email_list&offset=0"));
+            return JsonConvert.DeserializeObject<Response>(Contact("f=get_email_list&offset=0"));
         }
 
 
@@ -249,9 +281,9 @@ namespace GuerrillaMailExample
         /// offset=0 implies getting all emails
         /// </summary>
         /// <returns>Returns list of email</returns>
-        public List<EmailList> GetAllEmails()
+        public List<Email> GetAllEmails()
         {
-            var emails = JsonConvert.DeserializeObject<Email>(Contact("f=get_email_list&offset=0"));
+            var emails = JsonConvert.DeserializeObject<Response>(Contact("f=get_email_list&offset=0"));
             return emails.list;
         }
 
@@ -262,9 +294,9 @@ namespace GuerrillaMailExample
         /// </summary>
         /// <param name="mail_id">mail_id of an email</param>
         /// <returns>Returns list of emails</returns>
-        public List<EmailList> GetEmailsSinceID(string mail_id)
+        public List<Email> GetEmailsSinceID(string mail_id)
         {
-            var emails = JsonConvert.DeserializeObject<Email>(Contact("f=check_email&seq=" + mail_id));
+            var emails = JsonConvert.DeserializeObject<Response>(Contact("f=check_email&seq=" + mail_id));
             return emails.list;
         }
 
@@ -274,9 +306,9 @@ namespace GuerrillaMailExample
         /// If there are no emails it will return empty string
         /// </summary>
         /// <returns>Returns null if no email</returns>
-        public EmailList GetLastEmail()
+        public Email GetLastEmail()
         {
-            var emails = JsonConvert.DeserializeObject<Email>(Contact("f=get_email_list&offset=0"));
+            var emails = JsonConvert.DeserializeObject<Response>(Contact("f=get_email_list&offset=0"));
             return emails.list.LastOrDefault();
         }
 

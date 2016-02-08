@@ -1,5 +1,4 @@
 ﻿using System;
-using Newtonsoft.Json.Linq;
 
 namespace GuerrillaMailExample
 {
@@ -53,10 +52,10 @@ namespace GuerrillaMailExample
 
 
             /*
-                Example Two - Doing it local
+                Example Two - Doing it with a proxy
                 Print our different emails
             */
-            GuerrillaMail mailTwo = new GuerrillaMail();
+            GuerrillaMail mailTwo = new GuerrillaMail("123.123.12:12323");
             Console.WriteLine(mailTwo.GetMyEmail(1));
             Console.WriteLine(mailTwo.GetMyEmail(2));
             Console.WriteLine(mailTwo.GetMyEmail(3));
