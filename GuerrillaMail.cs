@@ -224,7 +224,7 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Initializer for the class with proxy
         /// </summary>
-        /// <param name="Proxy">Proxy address to request through</param>
+        /// <param name="proxy">Proxy address to request through</param>
         public GuerrillaMail(string proxy)
         {
             /*If we got passed a Proxy variable*/
@@ -283,8 +283,7 @@ namespace GuerrillaMailExample
         /// <returns>Returns list of email</returns>
         public List<Email> GetAllEmails()
         {
-            var emails = JsonConvert.DeserializeObject<Response>(Contact("f=get_email_list&offset=0"));
-            return emails.list;
+            return GetContent().list;
         }
 
 
@@ -308,8 +307,7 @@ namespace GuerrillaMailExample
         /// <returns>Returns null if no email</returns>
         public Email GetLastEmail()
         {
-            var emails = JsonConvert.DeserializeObject<Response>(Contact("f=get_email_list&offset=0"));
-            return emails.list.LastOrDefault();
+            return GetAllEmails().LastOrDefault();
         }
 
 
@@ -352,34 +350,15 @@ namespace GuerrillaMailExample
         /// Deletes an array of emails from the mailbox
         /// </summary>
         /// <param name="mail_ids">String array of mail ids</param>
-        public void DeleteEmails(string[] mail_ids)
+        public void DeleteEmails(IEnumerable<string> mail_ids)
         {
-            /*If there are at least 1 ID in the array*/
-            if (mail_ids.Length > 0)
-            {
-                /*Go through each array value and format delete string*/
-                string idString = string.Empty;
-                foreach (string id in mail_ids)
-                {
-                    /*Example: &email_ids[]53666&email_ids[]53667*/
-                    idString += string.Format("&email_ids[]{0}", id);
-                }
-
-                /*Delete emails*/
-                Contact("f=del_email" + idString);
-            }
-        }
-
-
-        /// <summary>
-        /// Deletes an array of emails from the mailbox
-        /// </summary>
-        /// <param name="mail_ids">List string of mail ids</param>
-        public void DeleteEmails(List<string> mail_ids)
-        {
-            /*Format email delete string*/
+            /*Go through each array value and format delete string*/
             string idString = string.Empty;
-            mail_ids.ForEach(o => idString += string.Format("&email_ids[]{0}", o));
+            foreach (string id in mail_ids)
+            {
+                /*Example: &email_ids[]53666&email_ids[]53667*/
+                idString += string.Format("&email_ids[]{0}", id);
+            }
 
             /*Delete emails*/
             Contact("f=del_email" + idString);
