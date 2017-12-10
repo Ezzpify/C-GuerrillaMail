@@ -32,7 +32,7 @@ namespace GuerrillaMailExample
             /// <summary>
             /// ID of email
             /// </summary>
-            public object mail_id { get; set; }
+            public int mail_id { get; set; }
 
 
             /// <summary>
@@ -293,6 +293,12 @@ namespace GuerrillaMailExample
         public Email GetLastEmail()
         {
             return GetAllEmails().LastOrDefault();
+        }
+
+        public Email GetEmail(int mail_id)
+        {
+            var emails = JsonConvert.DeserializeObject<Email>(Contact("f=fetch_email&email_id=mr_" + mail_id));
+            return emails;
         }
 
 
