@@ -209,6 +209,12 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Email address name
         /// </summary>
+        private string mEmailAddress;
+
+
+        /// <summary>
+        /// Email address name
+        /// </summary>
         private string mEmailAlias;
 
 
@@ -259,7 +265,8 @@ namespace GuerrillaMailExample
         {
             /*Initialize the inbox*/
             JObject Obj = JObject.Parse(Contact("f=get_email_address"));
-            mEmailAlias = ((string)Obj.SelectToken("email_addr")).Split('@')[0];
+            mEmailAddress = ((string)Obj.SelectToken("email_addr")).Split('@')[0];
+            mEmailAlias = (string)Obj.SelectToken("alias");
 
             /*Delete the automatic welcome email - id is always 1*/
             DeleteSingleEmail("1");
@@ -320,28 +327,51 @@ namespace GuerrillaMailExample
         {
             /*There are several email domains you can use by default*/
             /*Some sites may block guerrilla mail domains, so we can use several different ones*/
-            string address = string.Format("{0}@", mEmailAlias);
+            return string.Format("{0}@", mEmailAddress) + GetDomain(domain);
+        }
+
+
+        /// <summary>
+        /// Returns our alias with a specified domain
+        /// </summary>
+        /// <param name="domain">Specifies which domain to return (0-8) useful for services that blocks certain domains</param>
+        /// <returns>Returns email as string</returns>
+        public string GetMyAlias(int domain = 0)
+        {
+            /*There are several email domains you can use by default*/
+            /*Some sites may block guerrilla mail domains, so we can use several different ones*/
+            return string.Format("{0}@", mEmailAlias) + GetDomain(domain);
+        }
+
+
+        /// <summary>
+        /// Get the domain matching the given parameter.
+        /// </summary>
+        /// <param name="domain">Specifies which domain to return (0-8) useful for services that blocks certain domains</param>
+        /// <returns></returns>
+        private static string GetDomain(int domain)
+        {
             switch (domain)
             {
                 case 1:
-                    return address + "grr.la";
+                    return "grr.la";
                 case 2:
-                    return address + "guerrillamail.biz";
+                    return "guerrillamail.biz";
                 case 3:
-                    return address + "guerrillamail.com";
+                    return "guerrillamail.com";
                 case 4:
-                    return address + "guerrillamail.de";
+                    return "guerrillamail.de";
                 case 5:
-                    return address + "guerrillamail.net";
+                    return "guerrillamail.net";
                 case 6:
-                    return address + "guerrillamail.org";
+                    return "guerrillamail.org";
                 case 7:
-                    return address + "guerrillamailblock.com";
+                    return "guerrillamailblock.com";
                 case 8:
-                    return address + "spam4.me";
+                    return "spam4.me";
 
                 default:
-                    return address + "sharklasers.com";
+                    return "sharklasers.com";
             }
         }
 
