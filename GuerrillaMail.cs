@@ -416,7 +416,6 @@ namespace GuerrillaMailExample
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://api.guerrillamail.com/ajax.php?" + parameters);
             request.CookieContainer = mCookies;
             request.Method = "GET";
-            request.Host = "www.guerrillamail.com";
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36";
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
 
