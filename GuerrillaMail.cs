@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Net;
 using System.IO;
 using Newtonsoft.Json.Linq;
@@ -22,30 +21,7 @@ namespace GuerrillaMailExample
          * https://github.com/Ezzpify/
          *
         */
-
-
-        /// <summary>
-        /// Class to hold a proxy
-        /// </summary>
-        private class Proxy
-        {
-            /// <summary>
-            /// Proxy address
-            /// </summary>
-            public string address { get; set; }
-
-
-            /// <summary>
-            /// Proxy port
-            /// </summary>
-            public int port { get; set; }
-
-
-            /// <summary>
-            /// If the proxy has been set
-            /// </summary>
-            public bool initialized { get; set; }
-        }
+        
 
 
         /// <summary>
@@ -56,7 +32,7 @@ namespace GuerrillaMailExample
             /// <summary>
             /// ID of email
             /// </summary>
-            public object mail_id { get; set; }
+            public int mail_id { get; set; }
 
 
             /// <summary>
@@ -197,7 +173,7 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Optional proxy address string
         /// </summary>
-        private Proxy mProxy = new Proxy();
+        private WebProxy mProxy = new WebProxy();
 
 
         /// <summary>
@@ -209,60 +185,69 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Email address name
         /// </summary>
+        private string mEmailAddress;
+
+
+        /// <summary>
+        /// Email address name
+        /// </summary>
         private string mEmailAlias;
 
 
         /// <summary>
-        /// Initializer for class
+        /// Initializer for the class with optional proxy
         /// </summary>
-        public GuerrillaMail()
-        {
-            InitializeEmail();
-        }
+        /// <param name="proxy">Proxy address to request through</param>
+        public GuerrillaMail(WebProxy proxy = null) : this(null, proxy) { }
 
 
         /// <summary>
-        /// Initializer for the class with proxy
+        /// Initializer for the class using a custom email, with optional proxy
         /// </summary>
-        /// <param name="Proxy">Proxy address to request through</param>
-        public GuerrillaMail(string proxy)
+        public GuerrillaMail(string email, WebProxy proxy = null)
         {
-            /*If we got passed a Proxy variable*/
-            if (!string.IsNullOrEmpty(proxy))
+            if (proxy != null)
             {
-                /*Regex to match a proxy*/
-                string ValidIPRegex = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):[\d]+$";
-                if (Regex.IsMatch(proxy, ValidIPRegex))
-                {
-                    /*Split the proxy input and assign to global*/
-                    string[] pSpl = proxy.Split(':');
-                    mProxy.address = pSpl[0];
-                    mProxy.port = Convert.ToInt32(pSpl[1]);
-                    mProxy.initialized = true;
-                    mUseProxy = true;
-
-                    /*Initialize email and return*/
-                    InitializeEmail();
-                    return;
-                }
+                mProxy = proxy;
+                mUseProxy = true;
             }
 
-            /*Proxy was incorrect*/
-            throw new Exception("Proxy input was bad.");
+            if (string.IsNullOrEmpty(email)) {
+                InitializeEmail();
+            }
+            else {
+                InitializeEmail(email);
+            }
         }
 
 
         /// <summary>
         /// This initializes the email and inbox on site
         /// </summary>
-        private void InitializeEmail()
+        private void InitializeEmail(string email = null)
         {
             /*Initialize the inbox*/
-            JObject Obj = JObject.Parse(Contact("f=get_email_address"));
-            mEmailAlias = ((string)Obj.SelectToken("email_addr")).Split('@')[0];
+            JObject Obj;
+            if (email == null) {
+                Obj = JObject.Parse(Contact("f=get_email_address"));
+            }
+            else {
+                Obj = JObject.Parse(Contact("f=set_email_user", string.Format("email_user={0}&lang=en&site={1}", email, GetDomain(0))));
+            }
+            mEmailAddress = ((string)Obj.SelectToken("email_addr")).Split('@')[0];
+            mEmailAlias = (string)Obj.SelectToken("alias");
 
             /*Delete the automatic welcome email - id is always 1*/
             DeleteSingleEmail("1");
+        }
+
+
+        /// <summary>
+        /// Changes the current email address
+        /// </summary>
+        public void ChangeEmail(string address)
+        {
+            InitializeEmail(address);
         }
 
 
@@ -283,8 +268,7 @@ namespace GuerrillaMailExample
         /// <returns>Returns list of email</returns>
         public List<Email> GetAllEmails()
         {
-            var emails = JsonConvert.DeserializeObject<Response>(Contact("f=get_email_list&offset=0"));
-            return emails.list;
+            return GetContent().list;
         }
 
 
@@ -308,8 +292,13 @@ namespace GuerrillaMailExample
         /// <returns>Returns null if no email</returns>
         public Email GetLastEmail()
         {
-            var emails = JsonConvert.DeserializeObject<Response>(Contact("f=get_email_list&offset=0"));
-            return emails.list.LastOrDefault();
+            return GetAllEmails().LastOrDefault();
+        }
+
+        public Email GetEmail(int mail_id)
+        {
+            var emails = JsonConvert.DeserializeObject<Email>(Contact("f=fetch_email&email_id=mr_" + mail_id));
+            return emails;
         }
 
 
@@ -322,28 +311,51 @@ namespace GuerrillaMailExample
         {
             /*There are several email domains you can use by default*/
             /*Some sites may block guerrilla mail domains, so we can use several different ones*/
-            string address = string.Format("{0}@", mEmailAlias);
+            return string.Format("{0}@", mEmailAddress) + GetDomain(domain);
+        }
+
+
+        /// <summary>
+        /// Returns our alias with a specified domain
+        /// </summary>
+        /// <param name="domain">Specifies which domain to return (0-8) useful for services that blocks certain domains</param>
+        /// <returns>Returns email as string</returns>
+        public string GetMyAlias(int domain = 0)
+        {
+            /*There are several email domains you can use by default*/
+            /*Some sites may block guerrilla mail domains, so we can use several different ones*/
+            return string.Format("{0}@", mEmailAlias) + GetDomain(domain);
+        }
+
+
+        /// <summary>
+        /// Get the domain matching the given parameter.
+        /// </summary>
+        /// <param name="domain">Specifies which domain to return (0-8) useful for services that blocks certain domains</param>
+        /// <returns></returns>
+        private static string GetDomain(int domain)
+        {
             switch (domain)
             {
                 case 1:
-                    return address + "grr.la";
+                    return "grr.la";
                 case 2:
-                    return address + "guerrillamail.biz";
+                    return "guerrillamail.biz";
                 case 3:
-                    return address + "guerrillamail.com";
+                    return "guerrillamail.com";
                 case 4:
-                    return address + "guerrillamail.de";
+                    return "guerrillamail.de";
                 case 5:
-                    return address + "guerrillamail.net";
+                    return "guerrillamail.net";
                 case 6:
-                    return address + "guerrillamail.org";
+                    return "guerrillamail.org";
                 case 7:
-                    return address + "guerrillamailblock.com";
+                    return "guerrillamailblock.com";
                 case 8:
-                    return address + "spam4.me";
+                    return "spam4.me";
 
                 default:
-                    return address + "sharklasers.com";
+                    return "sharklasers.com";
             }
         }
 
@@ -352,34 +364,15 @@ namespace GuerrillaMailExample
         /// Deletes an array of emails from the mailbox
         /// </summary>
         /// <param name="mail_ids">String array of mail ids</param>
-        public void DeleteEmails(string[] mail_ids)
+        public void DeleteEmails(IEnumerable<string> mail_ids)
         {
-            /*If there are at least 1 ID in the array*/
-            if (mail_ids.Length > 0)
-            {
-                /*Go through each array value and format delete string*/
-                string idString = string.Empty;
-                foreach (string id in mail_ids)
-                {
-                    /*Example: &email_ids[]53666&email_ids[]53667*/
-                    idString += string.Format("&email_ids[]{0}", id);
-                }
-
-                /*Delete emails*/
-                Contact("f=del_email" + idString);
-            }
-        }
-
-
-        /// <summary>
-        /// Deletes an array of emails from the mailbox
-        /// </summary>
-        /// <param name="mail_ids">List string of mail ids</param>
-        public void DeleteEmails(List<string> mail_ids)
-        {
-            /*Format email delete string*/
+            /*Go through each array value and format delete string*/
             string idString = string.Empty;
-            mail_ids.ForEach(o => idString += string.Format("&email_ids[]{0}", o));
+            foreach (string id in mail_ids)
+            {
+                /*Example: &email_ids[]53666&email_ids[]53667*/
+                idString += string.Format("&email_ids[]{0}", id);
+            }
 
             /*Delete emails*/
             Contact("f=del_email" + idString);
@@ -399,21 +392,33 @@ namespace GuerrillaMailExample
         /// <summary>
         /// Calls the page with arguments
         /// </summary>
-        /// <param name="parameters">arguments</param>
+        /// <param name="parameters">GET arguments</param>
+        /// <param name="body">POST arguments</param>
         /// <returns>Returns json</returns>
-        private string Contact(string parameters)
+        private string Contact(string parameters, string body = null)
         {
             /*Set up the request*/
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://api.guerrillamail.com/ajax.php?" + parameters);
             request.CookieContainer = mCookies;
             request.Method = "GET";
-            request.Host = "www.guerrillamail.com";
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36";
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
 
+            if (!string.IsNullOrEmpty(body))
+            {
+                byte[] buffer = Encoding.UTF8.GetBytes(body);
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+                request.ContentLength = buffer.Length;
+
+                using (Stream steam = request.GetRequestStream())
+                    steam.Write(buffer, 0, buffer.Length);
+            }
+
             /*If we're using a proxy*/
-            if (mProxy.initialized && mUseProxy)
-                request.Proxy = new WebProxy(mProxy.address, mProxy.port);
+            if (mUseProxy)
+                request.Proxy = mProxy;
 
             /*Fetch the response*/
             using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
